@@ -12,6 +12,13 @@
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
         .calendar-day { min-height: 120px; }
         .hidden { display: none; }
+        .manual-content h1 { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
+        .manual-content h2 { font-size: 1.25rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem;}
+        .manual-content h3 { font-size: 1.1rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .manual-content p { margin-bottom: 0.5rem; }
+        .manual-content ul, .manual-content ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+        .manual-content li { margin-bottom: 0.5rem; }
+        .manual-content strong { color: #2563eb; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -38,15 +45,20 @@
                         </select>
                     </div>
                 </div>
-                <div id="auth-container">
-                    <button id="google-login-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2">
-                        <i class="fab fa-google"></i>
-                        <span>Google 계정으로 로그인</span>
+                <div class="flex items-center space-x-4">
+                    <button id="help-btn" class="text-gray-500 hover:text-blue-500">
+                        <i class="fas fa-question-circle text-2xl"></i>
                     </button>
-                    <div id="user-profile" class="hidden items-center space-x-3">
-                        <img id="user-photo" class="w-8 h-8 rounded-full" alt="User photo">
-                        <span id="user-name" class="font-semibold text-sm"></span>
-                        <button id="logout-btn" class="text-sm text-gray-600 hover:text-blue-500">로그아웃</button>
+                    <div id="auth-container">
+                        <button id="google-login-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2">
+                            <i class="fab fa-google"></i>
+                            <span>Google 계정으로 로그인</span>
+                        </button>
+                        <div id="user-profile" class="hidden items-center space-x-3">
+                            <img id="user-photo" class="w-8 h-8 rounded-full" alt="User photo">
+                            <span id="user-name" class="font-semibold text-sm"></span>
+                            <button id="logout-btn" class="text-sm text-gray-600 hover:text-blue-500">로그아웃</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -54,7 +66,6 @@
 
         <!-- Main Content Area -->
         <div class="flex flex-grow container mx-auto p-4 gap-4">
-            <!-- Main Calendar Section -->
             <main class="flex-grow">
                 <div class="bg-white rounded-lg shadow overflow-hidden h-full flex flex-col">
                     <div class="grid grid-cols-7 text-center font-semibold text-sm text-gray-600 border-b">
@@ -63,10 +74,8 @@
                     <div id="calendar-grid-container" class="calendar-grid bg-gray-200 flex-grow"></div>
                 </div>
             </main>
-            <!-- Stats Widget -->
             <aside id="stats-widget" class="w-72 bg-white rounded-lg shadow p-4 hidden flex-shrink-0">
                 <div id="stats-content" class="space-y-4 overflow-y-auto" style="max-height: calc(100vh - 150px);">
-                    <!-- 연락 카운트 섹션 -->
                     <div>
                         <h3 class="text-lg font-bold mb-2 border-b pb-2">📞 연락 현황</h3>
                         <div class="p-2 bg-gray-50 rounded">
@@ -78,7 +87,6 @@
                             <div id="yearly-contact-list" class="space-y-1"></div>
                         </div>
                     </div>
-                    <!-- 휴가 카운트 섹션 -->
                     <div>
                         <h3 class="text-lg font-bold mb-2 border-b pb-2">🌴 휴가 현황</h3>
                         <div class="p-2 bg-gray-50 rounded">
@@ -138,6 +146,22 @@
             </form>
         </div>
     </div>
+    <div id="manual-modal-container" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl h-3/4 m-4 flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-xl font-bold">사용 설명서</h3>
+                <button id="close-manual-btn" class="text-gray-500 hover:text-gray-800 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto manual-content">
+                <h1>공유 캘린더 웹페이지 사용 설명서</h1>
+                <p>이 문서는 구글 캘린더와 연동되는 공유 캘린더 웹페이지의 사용 방법을 안내합니다.</p>
+                <h2>1. 시작하기</h2><h3>1.1. 최초 로그인 및 권한 동의</h3><ol class="list-decimal"><li>웹페이지에 접속하면 오른쪽 위에 <strong>[Google 계정으로 로그인]</strong> 버튼이 보입니다. 이 버튼을 클릭하세요.</li><li>구글 계정 선택 창이 나타나면, 연동할 본인의 구글 계정을 선택합니다.</li><li>다음으로, "이 앱이 Google 계정에서 다음 작업을 할 수 있도록 허용하시겠습니까?"라는 권한 동의 화면이 나타납니다. 이 앱은 캘린더의 일정을 읽고 쓰는 기능이 필요하므로, <strong>[모두 선택]</strong> 후 <strong>[계속]</strong> 버튼을 눌러 권한을 허용해야 모든 기능을 정상적으로 사용할 수 있습니다.</li></ol>
+                <h2>2. 화면 구성</h2><p>로그인하면 다음과 같은 화면이 나타납니다.</p><ul class="list-disc"><li><strong>① 캘린더:</strong> 중앙에 위치한 달력입니다. 구글 캘린더에 등록된 일정이 자동으로 표시됩니다.</li><li><strong>② 날짜 이동:</strong> 헤더의 &lt; &gt; 버튼을 눌러 이전 달, 다음 달로 이동할 수 있습니다.</li><li><strong>③ 새 일정:</strong> <strong>[+ 새 일정]</strong> 버튼을 눌러 새로운 일정을 등록할 수 있습니다.</li><li><strong>④ 작성자 필터:</strong> 공유 캘린더에 일정을 등록한 모든 사람의 목록이 나타납니다. 특정 사람을 선택하면 그 사람이 작성한 일정만 필터링해서 볼 수 있습니다.</li><li><strong>⑤ 통계 위젯:</strong> 오른쪽 사이드바에는 '연락 현황'과 '휴가 현황'이 월별/연간 단위로 자동 집계되어 표시됩니다.</li></ul>
+                <h2>3. 주요 기능</h2><h3>3.1. 새 일정 추가하기</h3><ol class="list-decimal"><li>헤더의 <strong>[+ 새 일정]</strong> 버튼을 클릭하면 일정 추가 팝업창이 나타납니다.</li><li><strong>제목, 날짜, 설명</strong>을 입력합니다.</li><li><strong>나만 보기 (비공개):</strong> 이 옵션을 체크하면, 캘린더를 공유하는 다른 사람들에게는 이 일정이 보이지 않게 비공개로 등록됩니다.</li><li><strong>[저장]</strong> 버튼을 누르면 일정이 실제 구글 캘린더에 저장되고, 잠시 후 웹페이지 화면에도 자동으로 반영됩니다.</li></ol><h3>3.2. 작성자별 일정 필터링</h3><ol class="list-decimal"><li>헤더의 <strong>'모든 작성자'</strong> 라고 표시된 드롭다운 메뉴를 클릭합니다.</li><li>캘린더를 공유하는 팀원들의 목록이 나타납니다.</li><li>특정 팀원의 이름을 선택하면, 달력과 오른쪽 통계 위젯에 해당 팀원이 작성한 일정만 필터링되어 표시됩니다. 다시 전체 일정을 보려면 <strong>'모든 작성자'</strong>를 선택하세요.</li></ol><h3>3.3. 통계 위젯 활용하기</h3><p>오른쪽의 통계 위젯은 <strong>현재 보고 있는 달</strong>과 <strong>올해 전체</strong>를 기준으로 자동으로 집계됩니다.</p><ul class="list-disc"><li><strong>연락 현황:</strong> 일정 제목에 <strong>'OOO 통화', 'XXX 전화', 'ㅁㅁㅁ 연락'</strong> 과 같이 이름과 특정 키워드가 함께 포함된 경우, 해당 이름의 연락 횟수를 자동으로 카운트합니다.</li><li><strong>휴가 현황:</strong> 일정 제목에 <strong>'휴가', '연차', '반차'</strong> 라는 단어가 포함된 경우, 작성자별로 각 항목의 사용 횟수를 자동으로 카운트하여 보여줍니다.</li></ul>
+                <h2>4. 문제 해결</h2><ul class="list-disc"><li><strong>로그인 후 일정이 보이지 않을 때:</strong> Render의 무료 서버는 15분간 사용이 없으면 잠시 '잠자기 모드'로 전환됩니다. 이 경우, 로그인 후 약 30초 정도 기다렸다가 페이지를 새로고침하면 서버가 다시 깨어나면서 일정을 정상적으로 불러옵니다.</li><li><strong>새로 추가한 일정이 바로 보이지 않을 때:</strong> 구글 캘린더에 저장되고 다시 웹페이지에 반영되기까지 약간의 시간이 걸릴 수 있습니다. 잠시 후 페이지를 새로고침 해보세요.</li></ul>
+            </div>
+        </div>
+    </div>
 
     <!-- Firebase SDK -->
     <script type="module">
@@ -178,6 +202,9 @@
         const creatorFilterContainer = document.getElementById('creator-filter-container');
         const creatorFilter = document.getElementById('creator-filter');
         const statsWidget = document.getElementById('stats-widget');
+        const helpBtn = document.getElementById('help-btn');
+        const manualModal = document.getElementById('manual-modal-container');
+        const closeManualBtn = document.getElementById('close-manual-btn');
         
         let currentAccessToken = null;
         let allCalendarEvents = {};
@@ -198,7 +225,6 @@
             const currentYear = currentDate.getFullYear();
 
             const monthlyContacts = {}, yearlyContacts = {};
-            // --- 수정된 부분: 휴가 종류별 카운터 객체 ---
             const monthlyVacation = {}, yearlyVacation = {};
             const monthlyAnnual = {}, yearlyAnnual = {};
             const monthlyHalf = {}, yearlyHalf = {};
@@ -211,12 +237,9 @@
                 const eventYear = eventDate.getFullYear();
 
                 allCalendarEvents[date].forEach(event => {
-                    if (selectedCreator !== 'all' && event.creator !== selectedCreator) {
-                        return;
-                    }
+                    if (selectedCreator !== 'all' && event.creator !== selectedCreator) return;
                     if (!event.title) return;
 
-                    // 연락 카운트
                     for (const keyword of contactKeywords) {
                         const regex = new RegExp(`(.+?)\\s*(${keyword})`);
                         const match = event.title.match(regex);
@@ -224,36 +247,27 @@
                             const name = match[1].trim();
                             if (eventYear === currentYear) {
                                 yearlyContacts[name] = (yearlyContacts[name] || 0) + 1;
-                                if (eventMonth === currentMonth) {
-                                    monthlyContacts[name] = (monthlyContacts[name] || 0) + 1;
-                                }
+                                if (eventMonth === currentMonth) monthlyContacts[name] = (monthlyContacts[name] || 0) + 1;
                             }
                             break;
                         }
                     }
 
-                    // --- 수정된 부분: 휴가 종류별로 분리하여 카운트 ---
                     const creatorName = event.creator.split('@')[0];
                     if (event.title.includes('반차')) {
                         if (eventYear === currentYear) {
-                            yearlyHalf[creatorName] = (yearlyHalf[creatorName] || 0) + 1;
-                            if (eventMonth === currentMonth) {
-                                monthlyHalf[creatorName] = (monthlyHalf[creatorName] || 0) + 1;
-                            }
+                            yearlyHalf[creatorName] = (yearlyHalf[creatorName] || 0) + 0.5;
+                            if (eventMonth === currentMonth) monthlyHalf[creatorName] = (monthlyHalf[creatorName] || 0) + 0.5;
                         }
                     } else if (event.title.includes('연차')) {
                         if (eventYear === currentYear) {
                             yearlyAnnual[creatorName] = (yearlyAnnual[creatorName] || 0) + 1;
-                            if (eventMonth === currentMonth) {
-                                monthlyAnnual[creatorName] = (monthlyAnnual[creatorName] || 0) + 1;
-                            }
+                            if (eventMonth === currentMonth) monthlyAnnual[creatorName] = (monthlyAnnual[creatorName] || 0) + 1;
                         }
                     } else if (event.title.includes('휴가')) {
                         if (eventYear === currentYear) {
                             yearlyVacation[creatorName] = (yearlyVacation[creatorName] || 0) + 1;
-                            if (eventMonth === currentMonth) {
-                                monthlyVacation[creatorName] = (monthlyVacation[creatorName] || 0) + 1;
-                            }
+                            if (eventMonth === currentMonth) monthlyVacation[creatorName] = (monthlyVacation[creatorName] || 0) + 1;
                         }
                     }
                 });
@@ -266,17 +280,14 @@
                     listElement.innerHTML = `<p class="text-sm text-gray-500">기록 없음</p>`;
                     return;
                 }
-                Object.entries(counts)
-                    .sort((a, b) => b[1] - a[1])
-                    .forEach(([name, count]) => {
-                        const item = document.createElement('div');
-                        item.className = 'flex justify-between items-center text-sm';
-                        item.innerHTML = `<span>${name}</span><span class="font-bold text-blue-600">${count}${unit}</span>`;
-                        listElement.appendChild(item);
-                    });
+                Object.entries(counts).sort((a, b) => b[1] - a[1]).forEach(([name, count]) => {
+                    const item = document.createElement('div');
+                    item.className = 'flex justify-between items-center text-sm';
+                    item.innerHTML = `<span>${name}</span><span class="font-bold text-blue-600">${count}${unit}</span>`;
+                    listElement.appendChild(item);
+                });
             };
             
-            // --- 수정된 부분: 휴가 종류별로 표시하는 함수 ---
             const displayLeaveCounts = (elementId, vacation, annual, half, unit) => {
                 const listElement = document.getElementById(elementId);
                 listElement.innerHTML = '';
@@ -286,17 +297,14 @@
                     listElement.innerHTML = `<p class="text-sm text-gray-500">기록 없음</p>`;
                     return;
                 }
-
                 allNames.forEach(name => {
                     const vCount = vacation[name] || 0;
                     const aCount = annual[name] || 0;
                     const hCount = half[name] || 0;
-                    
                     let countsText = [];
                     if (vCount > 0) countsText.push(`휴가 ${vCount}${unit}`);
                     if (aCount > 0) countsText.push(`연차 ${aCount}${unit}`);
                     if (hCount > 0) countsText.push(`반차 ${hCount}${unit}`);
-
                     if(countsText.length > 0) {
                         const item = document.createElement('div');
                         item.className = 'flex justify-between items-center text-sm';
@@ -318,16 +326,10 @@
         const renderCalendar = () => {
             const selectedCreator = creatorFilter.value;
             let filteredEvents = {};
-
             for (const date in allCalendarEvents) {
                 const dailyEvents = allCalendarEvents[date];
-                const eventsToShow = (selectedCreator === 'all')
-                    ? dailyEvents
-                    : dailyEvents.filter(event => event.creator === selectedCreator);
-                
-                if (eventsToShow.length > 0) {
-                    filteredEvents[date] = eventsToShow;
-                }
+                const eventsToShow = (selectedCreator === 'all') ? dailyEvents : dailyEvents.filter(event => event.creator === selectedCreator);
+                if (eventsToShow.length > 0) filteredEvents[date] = eventsToShow;
             }
 
             const year = currentDate.getFullYear();
@@ -368,14 +370,12 @@
                 }
                 calendarGrid.appendChild(dayCell);
             }
-
             updateStatsWidget();
         };
 
         const populateCreatorFilter = () => {
             const creators = new Set();
             Object.values(allCalendarEvents).flat().forEach(event => creators.add(event.creator));
-            
             creatorFilter.innerHTML = '<option value="all">모든 작성자</option>';
             creators.forEach(creator => {
                 if(creator === '알 수 없음') return;
@@ -405,15 +405,11 @@
         
         const createGoogleCalendarEvent = (eventDetails) => {
             if (!currentAccessToken) return alert('로그인이 필요합니다.');
-            
             const backendUrl = 'https://calendar-backend-owbu.onrender.com/create-event';
             fetch(backendUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    accessToken: currentAccessToken,
-                    ...eventDetails 
-                }),
+                body: JSON.stringify({ accessToken: currentAccessToken, ...eventDetails }),
             })
             .then(res => res.ok ? res.json() : Promise.reject(res))
             .then(() => {
@@ -427,7 +423,6 @@
             });
         };
 
-        // --- 로그인/로그아웃 및 이벤트 핸들러 ---
         onAuthStateChanged(auth, (user) => {
             const isLoggedIn = !!user;
             loginBtn.classList.toggle('hidden', isLoggedIn);
@@ -435,7 +430,6 @@
             newEventBtn.classList.toggle('hidden', !isLoggedIn);
             creatorFilterContainer.classList.toggle('hidden', !isLoggedIn);
             statsWidget.classList.toggle('hidden', !isLoggedIn);
-
             if (user) {
                 userProfileDiv.classList.add('flex');
                 userNameSpan.textContent = user.displayName;
@@ -457,16 +451,11 @@
         logoutBtn.addEventListener('click', () => signOut(auth));
 
         const openNewEventModal = () => newEventModal.classList.remove('hidden');
-        const closeNewEventModal = () => {
-            newEventForm.reset();
-            newEventModal.classList.add('hidden');
-        }
-        
+        const closeNewEventModal = () => { newEventForm.reset(); newEventModal.classList.add('hidden'); }
         const closeEventModal = () => eventModal.classList.add('hidden');
 
         newEventBtn.addEventListener('click', openNewEventModal);
         cancelNewEventBtn.addEventListener('click', closeNewEventModal);
-        
         newEventForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const eventDetails = {
@@ -479,21 +468,13 @@
         });
         
         creatorFilter.addEventListener('change', renderCalendar);
-        
-        document.getElementById('prev-month-btn').addEventListener('click', () => {
-            currentDate.setMonth(currentDate.getMonth() - 1);
-            renderCalendar();
-        });
-
-        document.getElementById('next-month-btn').addEventListener('click', () => {
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            renderCalendar();
-        });
-
+        document.getElementById('prev-month-btn').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
+        document.getElementById('next-month-btn').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
         document.getElementById('close-modal-btn').addEventListener('click', closeEventModal);
-        eventModal.addEventListener('click', (e) => {
-            if (e.target === eventModal) closeEventModal();
-        });
+        eventModal.addEventListener('click', (e) => { if (e.target === eventModal) closeEventModal(); });
+        helpBtn.addEventListener('click', () => manualModal.classList.remove('hidden'));
+        closeManualBtn.addEventListener('click', () => manualModal.classList.add('hidden'));
+        manualModal.addEventListener('click', (e) => { if (e.target === manualModal) manualModal.classList.add('hidden'); });
         
         renderCalendar();
     </script>
