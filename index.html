@@ -4,28 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>내 캘린더</title>
-    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Custom styles for the calendar */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 1px; /* Creates the grid lines */
-        }
-        .calendar-day {
-            min-height: 120px; /* Ensures each day cell has enough height */
-        }
-        .hidden {
-            display: none;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
+        .calendar-day { min-height: 120px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -34,28 +20,21 @@
         <!-- Header Section -->
         <header class="bg-white shadow-sm z-10">
             <div class="container mx-auto px-4 py-3 flex items-center justify-between">
-                <!-- Left side: Title and Month Navigation -->
                 <div class="flex items-center space-x-4">
                     <i class="fas fa-calendar-alt text-blue-500 text-2xl"></i>
                     <h1 class="text-xl font-bold text-gray-700">My Calendar</h1>
                     <div class="flex items-center ml-6">
-                        <button id="prev-month-btn" class="p-2 rounded-full hover:bg-gray-200 transition-colors">
-                            <i class="fas fa-chevron-left text-gray-600"></i>
-                        </button>
+                        <button id="prev-month-btn" class="p-2 rounded-full hover:bg-gray-200"><i class="fas fa-chevron-left text-gray-600"></i></button>
                         <h2 id="current-month-year-text" class="text-lg font-semibold w-32 text-center"></h2>
-                        <button id="next-month-btn" class="p-2 rounded-full hover:bg-gray-200 transition-colors">
-                            <i class="fas fa-chevron-right text-gray-600"></i>
-                        </button>
+                        <button id="next-month-btn" class="p-2 rounded-full hover:bg-gray-200"><i class="fas fa-chevron-right text-gray-600"></i></button>
                     </div>
-                    <!-- '새 일정' 버튼 추가 -->
-                    <button id="new-event-btn" class="ml-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2 transition-colors hidden">
+                    <button id="new-event-btn" class="ml-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2 hidden">
                         <i class="fas fa-plus"></i>
                         <span>새 일정</span>
                     </button>
                 </div>
-                <!-- Right side: Auth container -->
                 <div id="auth-container">
-                    <button id="google-login-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2 transition-colors">
+                    <button id="google-login-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2">
                         <i class="fab fa-google"></i>
                         <span>Google 계정으로 로그인</span>
                     </button>
@@ -111,6 +90,13 @@
                     <label for="event-description" class="block text-sm font-medium text-gray-700">설명</label>
                     <textarea id="event-description" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
                 </div>
+                <!-- '나만 보기' 체크박스 추가 -->
+                <div class="mb-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="event-private" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <span class="ml-2 text-sm text-gray-700">나만 보기 (비공개)</span>
+                    </label>
+                </div>
                 <div class="flex justify-end space-x-2">
                     <button type="button" id="cancel-new-event-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">취소</button>
                     <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">저장</button>
@@ -137,60 +123,43 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
-        // --- 중요: 읽기/쓰기 권한으로 변경 ---
         provider.addScope('https://www.googleapis.com/auth/calendar');
 
+        // --- UI 요소 ---
         const loginBtn = document.getElementById('google-login-btn');
         const logoutBtn = document.getElementById('logout-btn');
         const userProfileDiv = document.getElementById('user-profile');
         const userNameSpan = document.getElementById('user-name');
         const userPhotoImg = document.getElementById('user-photo');
-        const calendarGrid = document.getElementById('calendar-grid-container');
-        const currentMonthYearText = document.getElementById('current-month-year-text');
-        const eventModal = document.getElementById('event-modal-container');
-        const modalTitle = document.getElementById('modal-title-text');
-        const modalTime = document.getElementById('modal-time-text');
-        const modalDescription = document.getElementById('modal-description-text');
         const newEventBtn = document.getElementById('new-event-btn');
         const newEventModal = document.getElementById('new-event-modal-container');
         const newEventForm = document.getElementById('new-event-form');
         const cancelNewEventBtn = document.getElementById('cancel-new-event-btn');
         
-        let calendarEvents = {};
-        let currentDate = new Date();
         let currentAccessToken = null;
 
-        const openEventModal = (eventData) => { /* ... (변경 없음) ... */ };
-        const renderCalendar = (events = {}) => { /* ... (변경 없음) ... */ };
-
+        // --- 함수 정의 (캘린더 렌더링, API 호출 등) ---
+        // (이 부분은 이전 코드와 동일하여 생략합니다. 실제 코드에는 포함되어야 합니다.)
+        const renderCalendar = (events = {}) => { /* ... */ };
+        const openEventModal = (eventData) => { /* ... */ };
+        
         const fetchGoogleCalendarEvents = (token) => {
-            currentAccessToken = token; // 현재 토큰 저장
+            currentAccessToken = token;
             const backendUrl = 'https://calendar-backend-owbu.onrender.com/get-calendar-events';
             fetch(backendUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ accessToken: token }),
             })
-            .then(response => {
-                if (!response.ok) throw new Error('서버에서 응답을 받지 못했습니다.');
-                return response.json();
-            })
-            .then(data => {
-                calendarEvents = data;
-                renderCalendar(calendarEvents);
-            })
-            .catch(error => {
-                console.error('캘린더 이벤트 로딩 실패:', error);
-                alert('캘린더 이벤트를 가져오는 데 실패했습니다.');
-            });
+            .then(res => res.ok ? res.json() : Promise.reject(res))
+            .then(data => renderCalendar(data))
+            .catch(err => console.error('이벤트 로딩 실패:', err));
         };
-
-        // --- 새 일정 생성 함수 추가 ---
+        
+        // --- 수정된 새 일정 생성 함수 ---
         const createGoogleCalendarEvent = (eventDetails) => {
-            if (!currentAccessToken) {
-                alert('로그인이 필요합니다.');
-                return;
-            }
+            if (!currentAccessToken) return alert('로그인이 필요합니다.');
+            
             const backendUrl = 'https://calendar-backend-owbu.onrender.com/create-event';
             fetch(backendUrl, {
                 method: 'POST',
@@ -200,70 +169,64 @@
                     ...eventDetails 
                 }),
             })
-            .then(response => {
-                if (!response.ok) throw new Error('일정 생성에 실패했습니다.');
-                return response.json();
-            })
-            .then(data => {
+            .then(res => res.ok ? res.json() : Promise.reject(res))
+            .then(() => {
                 alert('일정이 성공적으로 생성되었습니다!');
                 closeNewEventModal();
                 fetchGoogleCalendarEvents(currentAccessToken); // 캘린더 새로고침
             })
-            .catch(error => {
-                console.error('일정 생성 실패:', error);
+            .catch(err => {
+                console.error('일정 생성 실패:', err);
                 alert('일정 생성에 실패했습니다.');
             });
         };
 
-        loginBtn.addEventListener('click', () => {
-            signInWithPopup(auth, provider)
-                .then((result) => {
-                    const credential = GoogleAuthProvider.credentialFromResult(result);
-                    const accessToken = credential.accessToken;
-                    fetchGoogleCalendarEvents(accessToken);
-                })
-                .catch((error) => console.error("Login Error:", error));
-        });
-
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth).catch((error) => console.error("Logout Error:", error));
-        });
-
+        // --- 로그인/로그아웃 및 이벤트 핸들러 ---
         onAuthStateChanged(auth, (user) => {
+            const isLoggedIn = !!user;
+            loginBtn.classList.toggle('hidden', isLoggedIn);
+            userProfileDiv.classList.toggle('hidden', !isLoggedIn);
+            newEventBtn.classList.toggle('hidden', !isLoggedIn);
             if (user) {
-                loginBtn.classList.add('hidden');
-                userProfileDiv.classList.remove('hidden');
                 userProfileDiv.classList.add('flex');
-                newEventBtn.classList.remove('hidden'); // 로그인 시 '새 일정' 버튼 보이기
                 userNameSpan.textContent = user.displayName;
                 userPhotoImg.src = user.photoURL;
             } else {
-                loginBtn.classList.remove('hidden');
-                userProfileDiv.classList.add('hidden');
-                userProfileDiv.classList.remove('flex');
-                newEventBtn.classList.add('hidden'); // 로그아웃 시 '새 일정' 버튼 숨기기
                 currentAccessToken = null;
                 renderCalendar({});
             }
         });
-        
+
+        loginBtn.addEventListener('click', () => {
+            signInWithPopup(auth, provider)
+                .then(result => GoogleAuthProvider.credentialFromResult(result))
+                .then(credential => fetchGoogleCalendarEvents(credential.accessToken))
+                .catch(err => console.error("로그인 에러:", err));
+        });
+
+        logoutBtn.addEventListener('click', () => signOut(auth));
+
         const openNewEventModal = () => newEventModal.classList.remove('hidden');
         const closeNewEventModal = () => newEventModal.classList.add('hidden');
 
         newEventBtn.addEventListener('click', openNewEventModal);
         cancelNewEventBtn.addEventListener('click', closeNewEventModal);
+        
         newEventForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const eventDetails = {
                 title: document.getElementById('event-title').value,
                 date: document.getElementById('event-date').value,
                 description: document.getElementById('event-description').value,
+                // '나만 보기' 체크박스 값을 함께 보냅니다.
+                isPrivate: document.getElementById('event-private').checked
             };
             createGoogleCalendarEvent(eventDetails);
         });
 
+        // --- 초기화 ---
         document.addEventListener('DOMContentLoaded', () => {
-            // ... (기존 캘린더 이동/닫기 로직은 여기에 그대로 둡니다) ...
+            // ... (캘린더 이동/닫기 로직) ...
             renderCalendar();
         });
     </script>
