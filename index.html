@@ -23,6 +23,9 @@
         .calendar-day {
             min-height: 120px; /* Ensures each day cell has enough height */
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -45,7 +48,18 @@
                         </button>
                     </div>
                 </div>
-                <!-- 로그인 버튼이 제거되었습니다. -->
+                <!-- Right side: Auth container -->
+                <div id="auth-container">
+                    <button id="google-login-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2 transition-colors">
+                        <i class="fab fa-google"></i>
+                        <span>Google 계정으로 로그인</span>
+                    </button>
+                    <div id="user-profile" class="hidden items-center space-x-3">
+                        <img id="user-photo" class="w-8 h-8 rounded-full" alt="User photo">
+                        <span id="user-name" class="font-semibold text-sm"></span>
+                        <button id="logout-btn" class="text-sm text-gray-600 hover:text-blue-500">로그아웃</button>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -85,7 +99,62 @@
         </div>
     </div>
 
-    <script>
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+
+        // --- 중요 ---
+        // TODO: 여기에 본인의 Firebase 프로젝트 설정 정보를 붙여넣으세요.
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // --- Auth UI Elements ---
+        const loginBtn = document.getElementById('google-login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userProfileDiv = document.getElementById('user-profile');
+        const userNameSpan = document.getElementById('user-name');
+        const userPhotoImg = document.getElementById('user-photo');
+
+        // --- Auth Event Listeners ---
+        loginBtn.addEventListener('click', () => {
+            signInWithPopup(auth, provider)
+                .catch((error) => console.error("Login Error:", error));
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth)
+                .catch((error) => console.error("Logout Error:", error));
+        });
+
+        // --- Auth State Change Handler ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) { // User is signed in
+                loginBtn.classList.add('hidden');
+                userProfileDiv.classList.remove('hidden');
+                userProfileDiv.classList.add('flex');
+                userNameSpan.textContent = user.displayName;
+                userPhotoImg.src = user.photoURL;
+            } else { // User is signed out
+                loginBtn.classList.remove('hidden');
+                userProfileDiv.classList.add('hidden');
+                userProfileDiv.classList.remove('flex');
+            }
+        });
+
+        // --- Calendar Logic (Starts here) ---
         document.addEventListener('DOMContentLoaded', () => {
             // --- DOM Element References ---
             const calendarGrid = document.getElementById('calendar-grid-container');
@@ -102,8 +171,6 @@
             let currentDate = new Date(); // This will track the currently displayed month and year.
 
             // --- Mock Event Data ---
-            // In a real app, this data would come from a server or API.
-            // The key is in 'YYYY-MM-DD' format.
             const mockEvents = {
                 [`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-05`]: [
                     { title: '팀 회의', time: '10:00 AM', description: '분기별 프로젝트 진행 상황 공유' }
@@ -121,42 +188,28 @@
             const renderCalendar = () => {
                 const year = currentDate.getFullYear();
                 const month = currentDate.getMonth();
-
-                // Set the header text (e.g., "2025년 8월")
                 currentMonthYearText.textContent = `${year}년 ${month + 1}월`;
-
-                // Clear the previous month's cells
                 calendarGrid.innerHTML = '';
+                const firstDayOfMonth = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-                // --- Calculate calendar grid info ---
-                const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0=Sunday, 1=Monday, ...
-                const daysInMonth = new Date(year, month + 1, 0).getDate(); // Get the last day of the month
-
-                // 1. Create empty cells for days before the 1st of the month
                 for (let i = 0; i < firstDayOfMonth; i++) {
                     const emptyCell = document.createElement('div');
                     emptyCell.className = 'calendar-day bg-gray-50';
                     calendarGrid.appendChild(emptyCell);
                 }
 
-                // 2. Create cells for each day of the current month
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dayCell = document.createElement('div');
                     dayCell.className = 'calendar-day bg-white p-2 flex flex-col relative hover:bg-gray-50 transition-colors';
-
-                    // --- Day Number ---
                     const dayNumber = document.createElement('span');
                     dayNumber.textContent = day;
                     dayNumber.className = 'text-sm self-start';
-
-                    // Highlight today's date
                     const today = new Date();
                     if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
                         dayNumber.className += ' bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center';
                     }
                     dayCell.appendChild(dayNumber);
-
-                    // --- Events ---
                     const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     if (mockEvents[dateString]) {
                         mockEvents[dateString].forEach(eventData => {
@@ -164,13 +217,12 @@
                             eventDiv.className = 'bg-blue-100 text-blue-800 text-xs rounded px-1 py-0.5 mt-1 cursor-pointer truncate hover:bg-blue-200';
                             eventDiv.textContent = eventData.title;
                             eventDiv.addEventListener('click', (e) => {
-                                e.stopPropagation(); // Prevent day cell click
+                                e.stopPropagation();
                                 openEventModal(eventData);
                             });
                             dayCell.appendChild(eventDiv);
                         });
                     }
-
                     calendarGrid.appendChild(dayCell);
                 }
             };
@@ -202,7 +254,6 @@
 
             closeModalBtn.addEventListener('click', closeEventModal);
             eventModal.addEventListener('click', (e) => {
-                // Close modal if the dark background is clicked
                 if (e.target === eventModal) {
                     closeEventModal();
                 }
