@@ -197,14 +197,14 @@
             const currentMonth = currentDate.getMonth();
             const currentYear = currentDate.getFullYear();
 
-            const monthlyContacts = {};
-            const yearlyContacts = {};
-            const monthlyLeaves = {};
-            const yearlyLeaves = {};
+            const monthlyContacts = {}, yearlyContacts = {};
+            // --- 수정된 부분: 휴가 종류별 카운터 객체 ---
+            const monthlyVacation = {}, yearlyVacation = {};
+            const monthlyAnnual = {}, yearlyAnnual = {};
+            const monthlyHalf = {}, yearlyHalf = {};
 
             const contactKeywords = ['통화', '전화', '연락'];
-            const leaveKeywords = ['휴가', '연차', '반차'];
-
+            
             for (const date in allCalendarEvents) {
                 const eventDate = new Date(date);
                 const eventMonth = eventDate.getMonth();
@@ -232,17 +232,28 @@
                         }
                     }
 
-                    // 휴가 카운트
-                    for (const keyword of leaveKeywords) {
-                        if (event.title.includes(keyword)) {
-                            const creatorName = event.creator.split('@')[0];
-                            if (eventYear === currentYear) {
-                                yearlyLeaves[creatorName] = (yearlyLeaves[creatorName] || 0) + 1;
-                                if (eventMonth === currentMonth) {
-                                    monthlyLeaves[creatorName] = (monthlyLeaves[creatorName] || 0) + 1;
-                                }
+                    // --- 수정된 부분: 휴가 종류별로 분리하여 카운트 ---
+                    const creatorName = event.creator.split('@')[0];
+                    if (event.title.includes('반차')) {
+                        if (eventYear === currentYear) {
+                            yearlyHalf[creatorName] = (yearlyHalf[creatorName] || 0) + 1;
+                            if (eventMonth === currentMonth) {
+                                monthlyHalf[creatorName] = (monthlyHalf[creatorName] || 0) + 1;
                             }
-                            break;
+                        }
+                    } else if (event.title.includes('연차')) {
+                        if (eventYear === currentYear) {
+                            yearlyAnnual[creatorName] = (yearlyAnnual[creatorName] || 0) + 1;
+                            if (eventMonth === currentMonth) {
+                                monthlyAnnual[creatorName] = (monthlyAnnual[creatorName] || 0) + 1;
+                            }
+                        }
+                    } else if (event.title.includes('휴가')) {
+                        if (eventYear === currentYear) {
+                            yearlyVacation[creatorName] = (yearlyVacation[creatorName] || 0) + 1;
+                            if (eventMonth === currentMonth) {
+                                monthlyVacation[creatorName] = (monthlyVacation[creatorName] || 0) + 1;
+                            }
                         }
                     }
                 });
@@ -264,11 +275,44 @@
                         listElement.appendChild(item);
                     });
             };
+            
+            // --- 수정된 부분: 휴가 종류별로 표시하는 함수 ---
+            const displayLeaveCounts = (elementId, vacation, annual, half, unit) => {
+                const listElement = document.getElementById(elementId);
+                listElement.innerHTML = '';
+                const allNames = new Set([...Object.keys(vacation), ...Object.keys(annual), ...Object.keys(half)]);
+
+                if (allNames.size === 0) {
+                    listElement.innerHTML = `<p class="text-sm text-gray-500">기록 없음</p>`;
+                    return;
+                }
+
+                allNames.forEach(name => {
+                    const vCount = vacation[name] || 0;
+                    const aCount = annual[name] || 0;
+                    const hCount = half[name] || 0;
+                    
+                    let countsText = [];
+                    if (vCount > 0) countsText.push(`휴가 ${vCount}${unit}`);
+                    if (aCount > 0) countsText.push(`연차 ${aCount}${unit}`);
+                    if (hCount > 0) countsText.push(`반차 ${hCount}${unit}`);
+
+                    if(countsText.length > 0) {
+                        const item = document.createElement('div');
+                        item.className = 'flex justify-between items-center text-sm';
+                        item.innerHTML = `<span>${name}</span><span class="font-bold text-green-600">${countsText.join(', ')}</span>`;
+                        listElement.appendChild(item);
+                    }
+                });
+                 if (listElement.innerHTML === '') {
+                    listElement.innerHTML = `<p class="text-sm text-gray-500">기록 없음</p>`;
+                }
+            };
 
             displayCounts('monthly-contact-list', monthlyContacts, '회');
             displayCounts('yearly-contact-list', yearlyContacts, '회');
-            displayCounts('monthly-leave-list', monthlyLeaves, '일');
-            displayCounts('yearly-leave-list', yearlyLeaves, '일');
+            displayLeaveCounts('monthly-leave-list', monthlyVacation, monthlyAnnual, monthlyHalf, '일');
+            displayLeaveCounts('yearly-leave-list', yearlyVacation, yearlyAnnual, yearlyHalf, '일');
         };
         
         const renderCalendar = () => {
