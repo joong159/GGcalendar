@@ -102,18 +102,19 @@
     <!-- Firebase SDK -->
     <script type="module">
         // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         // --- 중요 ---
-        // TODO: 여기에 본인의 Firebase 프로젝트 설정 정보를 붙여넣으세요.
+        // 제공해주신 Firebase 프로젝트 설정 정보로 업데이트했습니다.
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyAVmt80PhJ1YCkKfgyK4aKabIfr8uokAO8",
+            authDomain: "calender-64034.firebaseapp.com",
+            projectId: "calender-64034",
+            storageBucket: "calender-64034.appspot.com",
+            messagingSenderId: "895431766904",
+            appId: "1:895431766904:web:5ebe5c63c83e685baece8d",
+            measurementId: "G-9GEV4QVRV5"
         };
 
         // Initialize Firebase
