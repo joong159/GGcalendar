@@ -105,12 +105,11 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-        // --- 중요 ---
-        // Firebase 프로젝트 설정 정보입니다.
+        // --- Firebase 프로젝트 설정 정보입니다. ---
         const firebaseConfig = {
             apiKey: "AIzaSyAVmt80PhJ1YCkKfgyK4aKabIfr8uokAO8",
             authDomain: "calender-64034.firebaseapp.com",
-            projectId: "calender-64034", // "calender-64043"에서 "calender-64034"로 수정했습니다.
+            projectId: "calender-64034",
             storageBucket: "calender-64034.appspot.com",
             messagingSenderId: "895431766904",
             appId: "1:895431766904:web:5ebe5c63c83e685baece8d",
@@ -121,76 +120,93 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
-        
-        // Google Calendar API 접근 권한을 요청합니다.
         provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
 
-        // --- Auth UI Elements ---
+        // --- UI 요소들을 미리 찾아둡니다. ---
         const loginBtn = document.getElementById('google-login-btn');
         const logoutBtn = document.getElementById('logout-btn');
         const userProfileDiv = document.getElementById('user-profile');
         const userNameSpan = document.getElementById('user-name');
         const userPhotoImg = document.getElementById('user-photo');
-
-        // --- Auth Event Listeners ---
-        loginBtn.addEventListener('click', () => {
-            signInWithPopup(auth, provider)
-                .then((result) => {
-                    const credential = GoogleAuthProvider.credentialFromResult(result);
-                    const accessToken = credential.accessToken;
-                    // 로그인 성공 시 백엔드 서버에 캘린더 데이터를 요청합니다.
-                    fetchGoogleCalendarEvents(accessToken);
-                })
-                .catch((error) => console.error("Login Error:", error));
-        });
-
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth)
-                .catch((error) => console.error("Logout Error:", error));
-        });
-
-        // --- Auth State Change Handler ---
-        onAuthStateChanged(auth, (user) => {
-            if (user) { // User is signed in
-                loginBtn.classList.add('hidden');
-                userProfileDiv.classList.remove('hidden');
-                userProfileDiv.classList.add('flex');
-                userNameSpan.textContent = user.displayName;
-                userPhotoImg.src = user.photoURL;
-            } else { // User is signed out
-                loginBtn.classList.remove('hidden');
-                userProfileDiv.classList.add('hidden');
-                userProfileDiv.classList.remove('flex');
-                // 로그아웃 시 캘린더 이벤트를 모두 지웁니다.
-                renderCalendar({});
-            }
-        });
-
-        // --- Calendar Logic (Starts here) ---
+        const calendarGrid = document.getElementById('calendar-grid-container');
+        const currentMonthYearText = document.getElementById('current-month-year-text');
+        const eventModal = document.getElementById('event-modal-container');
+        const modalTitle = document.getElementById('modal-title-text');
+        const modalTime = document.getElementById('modal-time-text');
+        const modalDescription = document.getElementById('modal-description-text');
+        
+        // --- 상태 변수 ---
         let calendarEvents = {};
+        let currentDate = new Date();
 
-        // ** Node.js 백엔드 서버에 캘린더 이벤트를 요청하는 함수 **
+        // --- 함수 정의 ---
+
+        // ** 수정된 부분: 캘린더를 그리는 함수들을 바깥으로 꺼냈습니다. **
+        const openEventModal = (eventData) => {
+            modalTitle.textContent = eventData.title;
+            modalTime.textContent = eventData.time;
+            modalDescription.textContent = eventData.description;
+            eventModal.classList.remove('hidden');
+            eventModal.classList.add('flex');
+        };
+
+        const renderCalendar = (events = {}) => {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            currentMonthYearText.textContent = `${year}년 ${month + 1}월`;
+            calendarGrid.innerHTML = '';
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDayOfMonth; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-day bg-gray-50';
+                calendarGrid.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day bg-white p-2 flex flex-col relative hover:bg-gray-50 transition-colors';
+                const dayNumber = document.createElement('span');
+                dayNumber.textContent = day;
+                dayNumber.className = 'text-sm self-start';
+                const today = new Date();
+                if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
+                    dayNumber.className += ' bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center';
+                }
+                dayCell.appendChild(dayNumber);
+                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                if (events[dateString]) {
+                    events[dateString].forEach(eventData => {
+                        const eventDiv = document.createElement('div');
+                        eventDiv.className = 'bg-blue-100 text-blue-800 text-xs rounded px-1 py-0.5 mt-1 cursor-pointer truncate hover:bg-blue-200';
+                        eventDiv.textContent = eventData.title;
+                        eventDiv.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            openEventModal(eventData);
+                        });
+                        dayCell.appendChild(eventDiv);
+                    });
+                }
+                calendarGrid.appendChild(dayCell);
+            }
+        };
+
         const fetchGoogleCalendarEvents = (token) => {
-            
-            // Render 서버 주소입니다.
             const backendUrl = 'https://calendar-backend-owbu.onrender.com/get-calendar-events';
-
             fetch(backendUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ accessToken: token }),
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('서버에서 응답을 받지 못했습니다.');
-                }
+                if (!response.ok) throw new Error('서버에서 응답을 받지 못했습니다.');
                 return response.json();
             })
             .then(data => {
                 calendarEvents = data;
-                renderCalendar(calendarEvents); // 서버로부터 받은 실제 데이터로 캘린더를 그립니다.
+                renderCalendar(calendarEvents); // 이제 이 함수를 찾을 수 있습니다.
             })
             .catch(error => {
                 console.error('캘린더 이벤트 로딩 실패:', error);
@@ -198,70 +214,41 @@
             });
         };
 
-        // --- 아래는 캘린더를 화면에 그리는 로직입니다. (수정 불필요) ---
+        // --- 로그인/로그아웃 로직 ---
+        loginBtn.addEventListener('click', () => {
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    const credential = GoogleAuthProvider.credentialFromResult(result);
+                    const accessToken = credential.accessToken;
+                    fetchGoogleCalendarEvents(accessToken);
+                })
+                .catch((error) => console.error("Login Error:", error));
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).catch((error) => console.error("Logout Error:", error));
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loginBtn.classList.add('hidden');
+                userProfileDiv.classList.remove('hidden');
+                userProfileDiv.classList.add('flex');
+                userNameSpan.textContent = user.displayName;
+                userPhotoImg.src = user.photoURL;
+            } else {
+                loginBtn.classList.remove('hidden');
+                userProfileDiv.classList.add('hidden');
+                userProfileDiv.classList.remove('flex');
+                renderCalendar({}); // 이제 이 함수를 찾을 수 있습니다.
+            }
+        });
+
+        // --- 페이지가 처음 로드될 때 실행되는 로직 ---
         document.addEventListener('DOMContentLoaded', () => {
-            const calendarGrid = document.getElementById('calendar-grid-container');
-            const currentMonthYearText = document.getElementById('current-month-year-text');
             const prevMonthBtn = document.getElementById('prev-month-btn');
             const nextMonthBtn = document.getElementById('next-month-btn');
-            const eventModal = document.getElementById('event-modal-container');
             const closeModalBtn = document.getElementById('close-modal-btn');
-            const modalTitle = document.getElementById('modal-title-text');
-            const modalTime = document.getElementById('modal-time-text');
-            const modalDescription = document.getElementById('modal-description-text');
-
-            let currentDate = new Date();
-
-            const renderCalendar = (events = {}) => {
-                const year = currentDate.getFullYear();
-                const month = currentDate.getMonth();
-                currentMonthYearText.textContent = `${year}년 ${month + 1}월`;
-                calendarGrid.innerHTML = '';
-                const firstDayOfMonth = new Date(year, month, 1).getDay();
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-                for (let i = 0; i < firstDayOfMonth; i++) {
-                    const emptyCell = document.createElement('div');
-                    emptyCell.className = 'calendar-day bg-gray-50';
-                    calendarGrid.appendChild(emptyCell);
-                }
-
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const dayCell = document.createElement('div');
-                    dayCell.className = 'calendar-day bg-white p-2 flex flex-col relative hover:bg-gray-50 transition-colors';
-                    const dayNumber = document.createElement('span');
-                    dayNumber.textContent = day;
-                    dayNumber.className = 'text-sm self-start';
-                    const today = new Date();
-                    if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
-                        dayNumber.className += ' bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center';
-                    }
-                    dayCell.appendChild(dayNumber);
-                    const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    
-                    if (events[dateString]) {
-                        events[dateString].forEach(eventData => {
-                            const eventDiv = document.createElement('div');
-                            eventDiv.className = 'bg-blue-100 text-blue-800 text-xs rounded px-1 py-0.5 mt-1 cursor-pointer truncate hover:bg-blue-200';
-                            eventDiv.textContent = eventData.title;
-                            eventDiv.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                openEventModal(eventData);
-                            });
-                            dayCell.appendChild(eventDiv);
-                        });
-                    }
-                    calendarGrid.appendChild(dayCell);
-                }
-            };
-
-            const openEventModal = (eventData) => {
-                modalTitle.textContent = eventData.title;
-                modalTime.textContent = eventData.time;
-                modalDescription.textContent = eventData.description;
-                eventModal.classList.remove('hidden');
-                eventModal.classList.add('flex');
-            };
 
             const closeEventModal = () => {
                 eventModal.classList.add('hidden');
@@ -280,11 +267,10 @@
 
             closeModalBtn.addEventListener('click', closeEventModal);
             eventModal.addEventListener('click', (e) => {
-                if (e.target === eventModal) {
-                    closeEventModal();
-                }
+                if (e.target === eventModal) closeEventModal();
             });
             
+            // 처음 페이지가 열릴 때 캘린더를 한 번 그려줍니다.
             renderCalendar();
         });
     </script>
