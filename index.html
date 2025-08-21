@@ -32,7 +32,6 @@
                         <i class="fas fa-plus"></i>
                         <span>새 일정</span>
                     </button>
-                    <!-- 작성자 필터 드롭다운 추가 -->
                     <div id="creator-filter-container" class="ml-4 hidden">
                         <select id="creator-filter" class="rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
                             <option value="all">모든 작성자</option>
@@ -64,11 +63,33 @@
                     <div id="calendar-grid-container" class="calendar-grid bg-gray-200 flex-grow"></div>
                 </div>
             </main>
-            <!-- Contact Counter Widget -->
-            <aside id="contact-counter-widget" class="w-64 bg-white rounded-lg shadow p-4 hidden flex-shrink-0">
-                <h3 class="text-lg font-bold mb-4 border-b pb-2">📞 연락 카운트</h3>
-                <div id="contact-list" class="space-y-2 overflow-y-auto" style="max-height: calc(100vh - 200px);">
-                    <!-- 카운트 목록이 여기에 표시됩니다. -->
+            <!-- Stats Widget -->
+            <aside id="stats-widget" class="w-72 bg-white rounded-lg shadow p-4 hidden flex-shrink-0">
+                <div id="stats-content" class="space-y-4 overflow-y-auto" style="max-height: calc(100vh - 150px);">
+                    <!-- 연락 카운트 섹션 -->
+                    <div>
+                        <h3 class="text-lg font-bold mb-2 border-b pb-2">📞 연락 현황</h3>
+                        <div class="p-2 bg-gray-50 rounded">
+                            <h4 class="font-semibold text-sm mb-1">이번 달</h4>
+                            <div id="monthly-contact-list" class="space-y-1"></div>
+                        </div>
+                        <div class="p-2 mt-2 bg-gray-50 rounded">
+                            <h4 class="font-semibold text-sm mb-1">올해 누적</h4>
+                            <div id="yearly-contact-list" class="space-y-1"></div>
+                        </div>
+                    </div>
+                    <!-- 휴가 카운트 섹션 -->
+                    <div>
+                        <h3 class="text-lg font-bold mb-2 border-b pb-2">🌴 휴가 현황</h3>
+                        <div class="p-2 bg-gray-50 rounded">
+                            <h4 class="font-semibold text-sm mb-1">이번 달</h4>
+                            <div id="monthly-leave-list" class="space-y-1"></div>
+                        </div>
+                        <div class="p-2 mt-2 bg-gray-50 rounded">
+                            <h4 class="font-semibold text-sm mb-1">올해 누적</h4>
+                            <div id="yearly-leave-list" class="space-y-1"></div>
+                        </div>
+                    </div>
                 </div>
             </aside>
         </div>
@@ -156,11 +177,10 @@
         const modalDescription = document.getElementById('modal-description-text');
         const creatorFilterContainer = document.getElementById('creator-filter-container');
         const creatorFilter = document.getElementById('creator-filter');
-        const contactCounterWidget = document.getElementById('contact-counter-widget');
-        const contactList = document.getElementById('contact-list');
+        const statsWidget = document.getElementById('stats-widget');
         
         let currentAccessToken = null;
-        let allCalendarEvents = {}; // 모든 이벤트를 저장하는 원본
+        let allCalendarEvents = {};
         let currentDate = new Date();
 
         // --- 함수 정의 ---
@@ -172,38 +192,83 @@
             eventModal.classList.add('flex');
         };
 
-        const updateContactCounter = (events) => {
-            const counts = {};
-            const keywords = ['통화', '전화', '연락'];
-            
-            Object.values(events).flat().forEach(event => {
-                if (!event.title) return;
-                
-                for (const keyword of keywords) {
-                    const regex = new RegExp(`(.+?)\\s*(${keyword})`);
-                    const match = event.title.match(regex);
-                    if (match && match[1]) {
-                        const name = match[1].trim();
-                        counts[name] = (counts[name] || 0) + 1;
-                        break; 
-                    }
-                }
-            });
+        const updateStatsWidget = () => {
+            const selectedCreator = creatorFilter.value;
+            const currentMonth = currentDate.getMonth();
+            const currentYear = currentDate.getFullYear();
 
-            contactList.innerHTML = '';
-            if (Object.keys(counts).length === 0) {
-                contactList.innerHTML = '<p class="text-sm text-gray-500">연락 기록이 없습니다.</p>';
-                return;
+            const monthlyContacts = {};
+            const yearlyContacts = {};
+            const monthlyLeaves = {};
+            const yearlyLeaves = {};
+
+            const contactKeywords = ['통화', '전화', '연락'];
+            const leaveKeywords = ['휴가', '연차', '반차'];
+
+            for (const date in allCalendarEvents) {
+                const eventDate = new Date(date);
+                const eventMonth = eventDate.getMonth();
+                const eventYear = eventDate.getFullYear();
+
+                allCalendarEvents[date].forEach(event => {
+                    if (selectedCreator !== 'all' && event.creator !== selectedCreator) {
+                        return;
+                    }
+                    if (!event.title) return;
+
+                    // 연락 카운트
+                    for (const keyword of contactKeywords) {
+                        const regex = new RegExp(`(.+?)\\s*(${keyword})`);
+                        const match = event.title.match(regex);
+                        if (match && match[1]) {
+                            const name = match[1].trim();
+                            if (eventYear === currentYear) {
+                                yearlyContacts[name] = (yearlyContacts[name] || 0) + 1;
+                                if (eventMonth === currentMonth) {
+                                    monthlyContacts[name] = (monthlyContacts[name] || 0) + 1;
+                                }
+                            }
+                            break;
+                        }
+                    }
+
+                    // 휴가 카운트
+                    for (const keyword of leaveKeywords) {
+                        if (event.title.includes(keyword)) {
+                            const creatorName = event.creator.split('@')[0];
+                            if (eventYear === currentYear) {
+                                yearlyLeaves[creatorName] = (yearlyLeaves[creatorName] || 0) + 1;
+                                if (eventMonth === currentMonth) {
+                                    monthlyLeaves[creatorName] = (monthlyLeaves[creatorName] || 0) + 1;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                });
             }
 
-            Object.entries(counts)
-                .sort((a, b) => b[1] - a[1])
-                .forEach(([name, count]) => {
-                    const item = document.createElement('div');
-                    item.className = 'flex justify-between items-center text-sm';
-                    item.innerHTML = `<span>${name}</span><span class="font-bold text-blue-600">${count}회</span>`;
-                    contactList.appendChild(item);
-                });
+            const displayCounts = (elementId, counts, unit) => {
+                const listElement = document.getElementById(elementId);
+                listElement.innerHTML = '';
+                if (Object.keys(counts).length === 0) {
+                    listElement.innerHTML = `<p class="text-sm text-gray-500">기록 없음</p>`;
+                    return;
+                }
+                Object.entries(counts)
+                    .sort((a, b) => b[1] - a[1])
+                    .forEach(([name, count]) => {
+                        const item = document.createElement('div');
+                        item.className = 'flex justify-between items-center text-sm';
+                        item.innerHTML = `<span>${name}</span><span class="font-bold text-blue-600">${count}${unit}</span>`;
+                        listElement.appendChild(item);
+                    });
+            };
+
+            displayCounts('monthly-contact-list', monthlyContacts, '회');
+            displayCounts('yearly-contact-list', yearlyContacts, '회');
+            displayCounts('monthly-leave-list', monthlyLeaves, '일');
+            displayCounts('yearly-leave-list', yearlyLeaves, '일');
         };
         
         const renderCalendar = () => {
@@ -260,7 +325,7 @@
                 calendarGrid.appendChild(dayCell);
             }
 
-            updateContactCounter(filteredEvents);
+            updateStatsWidget();
         };
 
         const populateCreatorFilter = () => {
@@ -325,7 +390,7 @@
             userProfileDiv.classList.toggle('hidden', !isLoggedIn);
             newEventBtn.classList.toggle('hidden', !isLoggedIn);
             creatorFilterContainer.classList.toggle('hidden', !isLoggedIn);
-            contactCounterWidget.classList.toggle('hidden', !isLoggedIn);
+            statsWidget.classList.toggle('hidden', !isLoggedIn);
 
             if (user) {
                 userProfileDiv.classList.add('flex');
