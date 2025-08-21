@@ -103,14 +103,14 @@
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, OAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         // --- 중요 ---
-        // 제공해주신 Firebase 프로젝트 설정 정보로 업데이트했습니다.
+        // Firebase 프로젝트 설정 정보입니다.
         const firebaseConfig = {
             apiKey: "AIzaSyAVmt80PhJ1YCkKfgyK4aKabIfr8uokAO8",
             authDomain: "calender-64034.firebaseapp.com",
-            projectId: "calender-64034",
+            projectId: "calender-64043",
             storageBucket: "calender-64034.appspot.com",
             messagingSenderId: "895431766904",
             appId: "1:895431766904:web:5ebe5c63c83e685baece8d",
@@ -122,10 +122,8 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
         
-        // --- 중요: Google Calendar API 접근 권한 요청 ---
-        // 실제 연동 시, 로그인 후 이 권한을 사용자에게 요청해야 합니다.
+        // Google Calendar API 접근 권한을 요청합니다.
         provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
-
 
         // --- Auth UI Elements ---
         const loginBtn = document.getElementById('google-login-btn');
@@ -138,16 +136,9 @@
         loginBtn.addEventListener('click', () => {
             signInWithPopup(auth, provider)
                 .then((result) => {
-                    // 로그인 성공 시, Google API 사용을 위한 Access Token을 얻을 수 있습니다.
                     const credential = GoogleAuthProvider.credentialFromResult(result);
                     const accessToken = credential.accessToken;
-
-                    // ** 여기가 실제 Google Calendar API를 호출하는 부분입니다. **
-                    // 이 accessToken을 백엔드 서버로 보내서, 서버가 사용자를 대신해 캘린더 데이터를 가져와야 합니다.
-                    console.log("Access Token:", accessToken);
-                    alert("로그인 성공! 실제 연동을 위해서는 백엔드 서버에서 Google Calendar API를 호출해야 합니다.");
-                    
-                    // 지금은 실제 API 호출 대신 목업 데이터를 사용합니다.
+                    // 로그인 성공 시 백엔드 서버에 캘린더 데이터를 요청합니다.
                     fetchGoogleCalendarEvents(accessToken);
                 })
                 .catch((error) => console.error("Login Error:", error));
@@ -170,35 +161,45 @@
                 loginBtn.classList.remove('hidden');
                 userProfileDiv.classList.add('hidden');
                 userProfileDiv.classList.remove('flex');
-                // 로그아웃 시 캘린더를 초기화합니다.
-                renderCalendar({}); // 빈 객체를 전달하여 이벤트를 지웁니다.
+                // 로그아웃 시 캘린더 이벤트를 모두 지웁니다.
+                renderCalendar({});
             }
         });
 
         // --- Calendar Logic (Starts here) ---
-        let calendarEvents = {}; // 캘린더 이벤트를 저장할 변수
+        let calendarEvents = {};
 
-        // ** 실제 Google Calendar API 연동을 시뮬레이션하는 함수 **
+        // ** Node.js 백엔드 서버에 캘린더 이벤트를 요청하는 함수 **
         const fetchGoogleCalendarEvents = (token) => {
-            console.log("백엔드 서버로 이 토큰을 보내 API를 호출해야 합니다:", token);
-            // 실제로는 fetch()를 사용해 백엔드 API를 호출하고, 그 결과를 calendarEvents에 저장합니다.
-            // 지금은 하드코딩된 목업 데이터를 사용합니다.
-            const mockApiResult = {
-                [`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-08`]: [
-                    { title: '주간 보고서 작성', time: '11:00 AM', description: '영업팀 주간 실적 보고서' }
-                ],
-                [`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-17`]: [
-                    { title: '요가 클래스', time: '07:00 PM', description: '온라인 줌 미팅' }
-                ],
-                [`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-25`]: [
-                    { title: '결제일: Netflix', time: '하루 종일', description: '자동 결제 예정' }
-                ]
-            };
-            calendarEvents = mockApiResult;
-            renderCalendar(calendarEvents); // 새 이벤트 데이터로 캘린더를 다시 그립니다.
+            
+            // --- 여기가 가장 중요합니다! ---
+            // 보내주신 Render 서버 주소로 업데이트했습니다.
+            const backendUrl = 'https://calendar-backend-owbu.onrender.com/get-calendar-events';
+
+            fetch(backendUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ accessToken: token }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('서버에서 응답을 받지 못했습니다.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                calendarEvents = data;
+                renderCalendar(calendarEvents); // 서버로부터 받은 실제 데이터로 캘린더를 그립니다.
+            })
+            .catch(error => {
+                console.error('캘린더 이벤트 로딩 실패:', error);
+                alert('캘린더 이벤트를 가져오는 데 실패했습니다. 백엔드 서버가 켜져 있는지 확인해주세요.');
+            });
         };
 
-
+        // --- 아래는 캘린더를 화면에 그리는 로직입니다. (수정 불필요) ---
         document.addEventListener('DOMContentLoaded', () => {
             const calendarGrid = document.getElementById('calendar-grid-container');
             const currentMonthYearText = document.getElementById('current-month-year-text');
