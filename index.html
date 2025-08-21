@@ -110,7 +110,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyAVmt80PhJ1YCkKfgyK4aKabIfr8uokAO8",
             authDomain: "calender-64034.firebaseapp.com",
-            projectId: "calender-64043",
+            projectId: "calender-64034", // "calender-64043"에서 "calender-64034"로 수정했습니다.
             storageBucket: "calender-64034.appspot.com",
             messagingSenderId: "895431766904",
             appId: "1:895431766904:web:5ebe5c63c83e685baece8d",
@@ -172,8 +172,7 @@
         // ** Node.js 백엔드 서버에 캘린더 이벤트를 요청하는 함수 **
         const fetchGoogleCalendarEvents = (token) => {
             
-            // --- 여기가 가장 중요합니다! ---
-            // 보내주신 Render 서버 주소로 업데이트했습니다.
+            // Render 서버 주소입니다.
             const backendUrl = 'https://calendar-backend-owbu.onrender.com/get-calendar-events';
 
             fetch(backendUrl, {
